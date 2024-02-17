@@ -16,7 +16,7 @@ def main():
     os.system(cmd)
     print("Playing sound")
     os.system(f"ffplay -nodisp -autoexit -loglevel quiet {sample_name}")
-    
+
     # Capture image
     import cv2
     camera_capture = cv2.VideoCapture(0)
@@ -37,13 +37,19 @@ def main():
                                  sleep_after_point_reached=1)
         time.sleep(3)
 
-        # Make Spot to move by goal_x meters forward and goal_y meters left
-        spot.move_to_goal(goal_x=0.5, goal_y=0)
-        time.sleep(3)
+        # Make spot move to point in image
 
-        # Control Spot by velocity in m/s (or in rad/s for rotation)
-        spot.move_by_velocity_control(v_x=-0.3, v_y=0, v_rot=0, cmd_duration=2)
-        time.sleep(3)
+        image = spot.capture_images(['frontleft_fisheye_image'])[0]
+
+        spot.move_to_object_in_image(image, (300, 300))
+
+        # # Make Spot to move by goal_x meters forward and goal_y meters left
+        # spot.move_to_goal(goal_x=0.5, goal_y=0)
+        # time.sleep(3)
+        #
+        # # Control Spot by velocity in m/s (or in rad/s for rotation)
+        # spot.move_by_velocity_control(v_x=-0.3, v_y=0, v_rot=0, cmd_duration=2)
+        # time.sleep(3)
 
 
 if __name__ == '__main__':

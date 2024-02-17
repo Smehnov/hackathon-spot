@@ -1,7 +1,10 @@
 import time
 import bosdyn.client
+from bosdyn.api import geometry_pb2, manipulation_api_pb2
 from bosdyn.client.robot_command import RobotCommandClient, RobotCommandBuilder, blocking_stand  # , blocking_sit
 from bosdyn.geometry import EulerZXY
+from bosdyn.client.image import ImageClient
+from bosdyn.client.manipulation_api_client import ManipulationApiClient
 from bosdyn.api.spot import robot_command_pb2 as spot_command_pb2
 from bosdyn.client.frame_helpers import ODOM_FRAME_NAME
 from bosdyn.api.basic_command_pb2 import RobotCommandFeedbackStatus
@@ -14,6 +17,11 @@ from bosdyn.client import math_helpers
 import traceback
 
 VELOCITY_CMD_DURATION = 0.5
+LIST_CAMERA_IDENTIFIERS = ['back_depth', 'back_depth_in_visual_frame', 'back_fisheye_image', 'frontleft_depth',
+                           'frontleft_depth_in_visual_frame', 'frontleft_fisheye_image', 'frontright_depth',
+                           'frontright_depth_in_visual_frame', 'frontright_fisheye_image', 'left_depth',
+                           'left_depth_in_visual_frame',
+                           'left_fisheye_image', 'right_depth', 'right_depth_in_visual_frame', 'right_fisheye_image']
 
 
 class SpotController:
@@ -30,6 +38,10 @@ class SpotController:
         self.robot.authenticate(username, password)
         self.command_client = self.robot.ensure_client(RobotCommandClient.default_service_name)
         self.robot.logger.info("Authenticated")
+
+        # TODO: Create ImageCient instance and ManipulationApiClient instance
+        self.image_client = self.robot.ensure_client(ImageClient.default_service_name)
+        self.manipulation_api_client = self.robot.ensure_client(ManipulationApiClient.default_service_name)
 
         self._lease_client = None
         self._lease = None
@@ -173,3 +185,40 @@ class SpotController:
 
     def dust_off(self, yaws, pitches, rolls):
         self.move_head_in_points(yaws, pitches, rolls, sleep_after_point_reached=0, body_height=0)
+
+    def capture_images(self, cameras):
+        assert all([x in LIST_CAMERA_IDENTIFIERS for x in cameras]), "Invalid Camera"
+
+        image_responses = self.image_client.get_image_from_sources(cameras)
+
+        return image_responses
+
+    def move_to_object_in_image(self, image, point):
+        walk_vec = geometry_pb2.Vec2(x=point[0], y=point[1])
+
+        walk_to = manipulation_api_pb2.WalkToObjectInImage(
+            pixel_xy=walk_vec, transforms_snapshot_for_camera=image.shot.transforms_snapshot,
+            frame_name_image_sensor=image.shot.frame_name_image_sensor,
+            camera_model=image.source.pinhole
+        )
+
+        walk_to_request = manipulation_api_pb2.ManipulationApiRequest(
+            walk_to_object_in_image=walk_to
+        )
+
+        cmd_response = self.manipulation_api_client.manipulation_api_command(
+            manipulation_api_request=walk_to_request
+        )
+
+        while True:
+            time.sleep(0.25)
+
+            feedback_request = manipulation_api_pb2.ManipulationApiFeedbackRequest(
+                manipulation_cmd_i=cmd_response.manipulation_cmd_id
+            )
+
+            response = self.manipulation_api_client.manipulation_api_feedback_command(
+                manipulation_api_feedback_request=feedback_request)
+
+            if response.current_state == manipulation_api_pb2.MANIP_STATE_DONE:
+                break
