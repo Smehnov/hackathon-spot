@@ -173,3 +173,24 @@ class SpotController:
 
     def dust_off(self, yaws, pitches, rolls):
         self.move_head_in_points(yaws, pitches, rolls, sleep_after_point_reached=0, body_height=0)
+    def move_left(self, speed=0.1, duration=0.5):
+        """
+        Moves the robot to the left.
+
+        :param speed: The speed at which the robot should move to the left, in meters per second.
+        :param duration: The duration for which the robot should continue moving left, in seconds.
+        """
+        # Assuming positive v_y moves the robot to the left. Adjust speed and duration as needed.
+        self.stand_at_height(0.6)
+        self.move_by_velocity_control(v_x=0.0, v_y=speed, v_rot=0.0, cmd_duration=duration)
+    def move_right(self, speed=0.1, duration=0.5):
+        """
+        Moves the robot to the left.
+
+        :param speed: The speed at which the robot should move to the left, in meters per second.
+        :param duration: The duration for which the robot should continue moving left, in seconds.
+        """
+        # Assuming positive v_y moves the robot to the left. Adjust speed and duration as needed.
+        self.stand_at_height(0.6)
+
+        return self.move_left(speed=-speed,duration=duration)
