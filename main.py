@@ -9,7 +9,7 @@ ROBOT_IP = "10.0.0.3"#os.environ['ROBOT_IP']
 SPOT_USERNAME = "admin"#os.environ['SPOT_USERNAME']
 SPOT_PASSWORD = "2zqa8dgw7lor"#os.environ['SPOT_PASSWORD']
 
-HOST_IP = "2.tcp.us-cal-1.ngrok.io"
+HOST_IP = "13.52.223.143"
 HOST_PORT = 12905
 
 
