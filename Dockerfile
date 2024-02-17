@@ -12,10 +12,11 @@ ARG Version
 ARG GitCommit
 RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM" 
 
+RUN apt install curl
 
 RUN curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
-  | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
-  | sudo tee /etc/apt/sources.list.d/ngrok.list && sudo apt update -y && sudo apt install ngrok -y
+  | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
+  | tee /etc/apt/sources.list.d/ngrok.list && apt update -y && apt install ngrok -y
 
 RUN chmod +x startup.sh
 
