@@ -2,7 +2,7 @@ import socket
 import json
 
 # Define the IP address and port of the module running on the Spot
-MODULE_IP = '10.0.0.3'  # Replace with the actual IP address
+MODULE_IP = '0.0.0.0'  # Replace with the actual IP address
 MODULE_PORT = 12345  # Replace with the actual port
 
 def send_spot_instructions(instructions):
