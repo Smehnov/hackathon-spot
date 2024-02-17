@@ -1,5 +1,7 @@
 import time
 import bosdyn.client
+import cv2
+import numpy as np
 from bosdyn.api import geometry_pb2, manipulation_api_pb2
 from bosdyn.client.robot_command import RobotCommandClient, RobotCommandBuilder, blocking_stand  # , blocking_sit
 from bosdyn.geometry import EulerZXY
@@ -23,6 +25,8 @@ LIST_CAMERA_IDENTIFIERS = ['back_depth', 'back_depth_in_visual_frame', 'back_fis
                            'left_depth_in_visual_frame',
                            'left_fisheye_image', 'right_depth', 'right_depth_in_visual_frame', 'right_fisheye_image']
 
+LIST_CAMERA_DIRECTIONS = ['frontleft', 'frontright', 'right', 'left', 'back']
+
 
 class SpotController:
     def __init__(self, username, password, robot_ip):
@@ -39,9 +43,7 @@ class SpotController:
         self.command_client = self.robot.ensure_client(RobotCommandClient.default_service_name)
         self.robot.logger.info("Authenticated")
 
-        # TODO: Create ImageCient instance and ManipulationApiClient instance
         self.image_client = self.robot.ensure_client(ImageClient.default_service_name)
-        self.manipulation_api_client = self.robot.ensure_client(ManipulationApiClient.default_service_name)
 
         self._lease_client = None
         self._lease = None
@@ -193,32 +195,18 @@ class SpotController:
 
         return image_responses
 
-    def move_to_object_in_image(self, image, point):
-        walk_vec = geometry_pb2.Vec2(x=point[0], y=point[1])
+    def capture_depth_and_visual_image(self, direction):
+        assert direction in LIST_CAMERA_DIRECTIONS, "Invalid Camera Direction"
 
-        walk_to = manipulation_api_pb2.WalkToObjectInImage(
-            pixel_xy=walk_vec, transforms_snapshot_for_camera=image.shot.transforms_snapshot,
-            frame_name_image_sensor=image.shot.frame_name_image_sensor,
-            camera_model=image.source.pinhole
-        )
+        sources = [direction + '_depth', direction + '_visual_in_depth_frame']
 
-        walk_to_request = manipulation_api_pb2.ManipulationApiRequest(
-            walk_to_object_in_image=walk_to
-        )
+        image_responses = self.capture_images(sources)
 
-        cmd_response = self.manipulation_api_client.manipulation_api_command(
-            manipulation_api_request=walk_to_request
-        )
+        cv_depth = np.frombuffer(image_responses[0].shot.image.data, dtype=np.uint16)
 
-        while True:
-            time.sleep(0.25)
+        cv_depth = cv_depth.reshape(image_responses[0].shot.image.rows,
+                                    image_responses[0].shot.image.cols)
 
-            feedback_request = manipulation_api_pb2.ManipulationApiFeedbackRequest(
-                manipulation_cmd_i=cmd_response.manipulation_cmd_id
-            )
+        cv_visual = cv2.imdecode(np.frombuffer(image_responses[1].shot.image.data, dtype=np.uint8), -1)
 
-            response = self.manipulation_api_client.manipulation_api_feedback_command(
-                manipulation_api_feedback_request=feedback_request)
-
-            if response.current_state == manipulation_api_pb2.MANIP_STATE_DONE:
-                break
+        return cv_depth, cv_visual

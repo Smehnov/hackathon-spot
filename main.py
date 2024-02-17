@@ -37,11 +37,9 @@ def main():
                                  sleep_after_point_reached=1)
         time.sleep(3)
 
-        # Make spot move to point in image
+        # Capture Image
 
-        image = spot.capture_images(['frontleft_fisheye_image'])[0]
 
-        spot.move_to_object_in_image(image, (300, 300))
 
         # # Make Spot to move by goal_x meters forward and goal_y meters left
         # spot.move_to_goal(goal_x=0.5, goal_y=0)
