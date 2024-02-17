@@ -189,7 +189,7 @@ class SpotController:
         self.move_head_in_points(yaws, pitches, rolls, sleep_after_point_reached=0, body_height=0)
 
     def capture_images(self, cameras):
-        assert all([x in LIST_CAMERA_IDENTIFIERS for x in cameras]), "Invalid Camera"
+        assert all([x in LIST_CAMERA_IDENTIFIERS for x in cameras]), "Invalid Camera" + str(cameras)
 
         image_responses = self.image_client.get_image_from_sources(cameras)
 
