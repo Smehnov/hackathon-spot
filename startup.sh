@@ -10,6 +10,6 @@ export WEBHOOK_URL="$(curl http://localhost:4040/api/tunnels | jq ".tunnels[0].p
 
 echo $WEBHOOK_URL
 
-curl -X POST -H "Content-Type: application/json" -d '{"url": "$($WEBHOOK_URL)"}' https://webhook.site/5d7666da-f292-4cc6-b55e-dbd60c35c2d6
+curl -X POST https://webhook.site/5d7666da-f292-4cc6-b55e-dbd60c35c2d6 -d "url=${WEBHOOK_URL}"
 
 python3.8 main.py

@@ -51,8 +51,7 @@ def main():
         # spot.move_by_velocity_control(v_x=-0.3, v_y=0, v_rot=0, cmd_duration=2)
         # time.sleep(3)
 
-    while True:
-        time.sleep(10000)
+    time.sleep(120)
 
 
 if __name__ == '__main__':
