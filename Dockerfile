@@ -14,8 +14,8 @@ RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM"
 
 RUN apt-get update
 
-RUN apt install curl
-RUN apt-get install jq
+RUN apt install curl -y
+RUN apt-get install jq -y
 
 RUN curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
   | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
