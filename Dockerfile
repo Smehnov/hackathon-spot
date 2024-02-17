@@ -24,4 +24,4 @@ COPY . .
 
 RUN chmod +x startup.sh
 
-CMD ["sh ./startup.sh"]
+CMD ["./startup.sh"]
