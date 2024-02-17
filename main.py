@@ -8,6 +8,41 @@ SPOT_USERNAME = "admin"#os.environ['SPOT_USERNAME']
 SPOT_PASSWORD = "2zqa8dgw7lor"#os.environ['SPOT_PASSWORD']
 
 
+# Use wrapper in context manager to lease control, turn on E-Stop, power on the robot and stand up at start
+# and to return lease + sit down at the end
+def spot_init():
+    try:
+        with SpotController(username=SPOT_USERNAME, password=SPOT_PASSWORD, robot_ip=ROBOT_IP) as spot:
+
+            time.sleep(2)
+
+            # Move head to specified positions with intermediate time.sleep
+            spot.move_head_in_points(yaws=[0.2, 0],
+                                    pitches=[0.3, 0],
+                                    rolls=[0.4, 0],
+                                    sleep_after_point_reached=1)
+            time.sleep(3)
+
+            # Capture Image
+            depth, visual = spot.capture_depth_and_visual_image('frontleft')
+            np.save("depth.npz", depth)
+            np.save("visual.npz", visual)
+
+            # # Make Spot to move by goal_x meters forward and goal_y meters left
+            # spot.move_to_goal(goal_x=0.5, goal_y=0)
+            # time.sleep(3)
+            #
+            # # Control Spot by velocity in m/s (or in rad/s for rotation)
+            # spot.move_by_velocity_control(v_x=-0.3, v_y=0, v_rot=0, cmd_duration=2)
+            # time.sleep(3)
+
+            return spot
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+
+
 def main():
     # #example of using micro and speakers
     # print("Start recording audio")
@@ -25,31 +60,11 @@ def main():
     print(f"Image Dimensions: {image.shape}")
     camera_capture.release()
 
-    # Use wrapper in context manager to lease control, turn on E-Stop, power on the robot and stand up at start
-    # and to return lease + sit down at the end
-    with SpotController(username=SPOT_USERNAME, password=SPOT_PASSWORD, robot_ip=ROBOT_IP) as spot:
-
-        time.sleep(2)
-
-        # Move head to specified positions with intermediate time.sleep
-        spot.move_head_in_points(yaws=[0.2, 0],
-                                 pitches=[0.3, 0],
-                                 rolls=[0.4, 0],
-                                 sleep_after_point_reached=1)
-        time.sleep(3)
-
-        # Capture Image
-        depth, visual = spot.capture_depth_and_visual_image('frontleft')
-        np.save("depth.npz", depth)
-        np.save("visual.npz", visual)
-
-        # # Make Spot to move by goal_x meters forward and goal_y meters left
-        # spot.move_to_goal(goal_x=0.5, goal_y=0)
-        # time.sleep(3)
-        #
-        # # Control Spot by velocity in m/s (or in rad/s for rotation)
-        # spot.move_by_velocity_control(v_x=-0.3, v_y=0, v_rot=0, cmd_duration=2)
-        # time.sleep(3)
+    # Initialize Spot
+    spot = spot_init()
+    if spot is None:
+        print("Failed to initialize Spot")
+        return
 
     while True:
         time.sleep(10000)
