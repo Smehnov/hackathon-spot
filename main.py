@@ -1,11 +1,16 @@
 import os
 import time
 from spot_controller import SpotController
+import socket
+import threading
 import numpy as np
 
 ROBOT_IP = "10.0.0.3"#os.environ['ROBOT_IP']
 SPOT_USERNAME = "admin"#os.environ['SPOT_USERNAME']
 SPOT_PASSWORD = "2zqa8dgw7lor"#os.environ['SPOT_PASSWORD']
+
+HOST_IP = "10.32.83.16"
+HOST_PORT = 8080
 
 
 # Use wrapper in context manager to lease control, turn on E-Stop, power on the robot and stand up at start
@@ -66,10 +71,48 @@ def main():
         print("Failed to initialize Spot")
         return
 
-    # Listen for one minute
-    import time
-    for _ in range(60):
-        time.sleep(1)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    try:
+        s.connect((HOST_IP, HOST_PORT))
+        print(f"Successfully connected to {HOST_IP}:{HOST_PORT}")
+
+        # You can send and receive data here using s.sendall() and s.recv()
+        # Example: s.sendall(b'Hello, server')
+    except Exception as e:
+        print(f"Failed to connect to {HOST_IP}:{HOST_PORT}")
+        print(f"Error: {e}")
+
+    buffer = ''
+
+    while True:
+        data = s.recv(2**12)
+
+        if not data:
+            print("Disconnected from the server.")
+            break
+
+        buffer += data.decode('utf-8')
+
+        while '\n' in buffer:
+            command, buffer = buffer.split('\n', 1)
+
+            if command == "take_image":
+                depth, visual = spot.capture_depth_and_visual_image('frontleft')
+                depth_bytes = depth.tobytes()
+                visual_bytes = visual.tobytes()
+                s.send(len(depth_bytes).to_bytes(4, 'little'))
+                s.send(depth_bytes)
+                s.send(len(visual_bytes).to_bytes(4, 'little'))
+                s.send(visual_bytes)
+            elif command == "":
+                pass
+            else:
+                pass
+
+
+    s.close()
+
 
 
 if __name__ == '__main__':
