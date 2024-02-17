@@ -24,4 +24,4 @@ COPY requirements.txt requirements.txt
 RUN python3.8 -m pip install -r requirements.txt
 COPY . .
 
-CMD ["./startup.sh"]
+CMD ["sh ./startup.sh"]
