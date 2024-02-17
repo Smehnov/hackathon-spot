@@ -9,8 +9,8 @@ ROBOT_IP = "10.0.0.3"#os.environ['ROBOT_IP']
 SPOT_USERNAME = "admin"#os.environ['SPOT_USERNAME']
 SPOT_PASSWORD = "2zqa8dgw7lor"#os.environ['SPOT_PASSWORD']
 
-HOST_IP = "10.32.83.16"
-HOST_PORT = 8080
+HOST_IP = "2.tcp.us-cal-1.ngrok.io"
+HOST_PORT = 12905
 
 
 # Use wrapper in context manager to lease control, turn on E-Stop, power on the robot and stand up at start
@@ -82,6 +82,8 @@ def main():
     except Exception as e:
         print(f"Failed to connect to {HOST_IP}:{HOST_PORT}")
         print(f"Error: {e}")
+        s.close()
+        return
 
     buffer = ''
 
@@ -110,9 +112,7 @@ def main():
             else:
                 pass
 
-
     s.close()
-
 
 
 if __name__ == '__main__':
