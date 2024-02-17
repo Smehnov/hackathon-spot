@@ -66,8 +66,10 @@ def main():
         print("Failed to initialize Spot")
         return
 
-    while True:
-        time.sleep(10000)
+    # Listen for one minute
+    import time
+    for _ in range(60):
+        time.sleep(1)
 
 
 if __name__ == '__main__':
