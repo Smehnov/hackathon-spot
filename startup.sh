@@ -1,8 +1,10 @@
 #!/bin/bash
 
-ngrok tcp 22 > /dev/null &
+ngrok config add-authtoken 4K4LMsW25XZAjYQJDjoyF_rcg3gYWP48R8J2AmFELL
 
-echo pidof ngrok
+nohup ngrok tcp 22 > /dev/null &
+
+python3.8 wait.py
 
 export WEBHOOK_URL="$(curl http://localhost:4040/api/tunnels | jq ".tunnels[0].public_url")"
 
