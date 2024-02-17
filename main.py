@@ -1,6 +1,7 @@
 import os
 import time
 from spot_controller import SpotController
+import numpy as np
 
 ROBOT_IP = "10.0.0.3"#os.environ['ROBOT_IP']
 SPOT_USERNAME = "admin"#os.environ['SPOT_USERNAME']
@@ -38,8 +39,9 @@ def main():
         time.sleep(3)
 
         # Capture Image
-
-
+        depth, visual = spot.capture_depth_and_visual_image('frontleft')
+        np.save("depth.npz", depth)
+        np.save("visual.npz", visual)
 
         # # Make Spot to move by goal_x meters forward and goal_y meters left
         # spot.move_to_goal(goal_x=0.5, goal_y=0)
@@ -48,6 +50,9 @@ def main():
         # # Control Spot by velocity in m/s (or in rad/s for rotation)
         # spot.move_by_velocity_control(v_x=-0.3, v_y=0, v_rot=0, cmd_duration=2)
         # time.sleep(3)
+
+    while True:
+        time.sleep(10000)
 
 
 if __name__ == '__main__':
