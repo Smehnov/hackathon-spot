@@ -198,7 +198,7 @@ class SpotController:
     def capture_depth_and_visual_image(self, direction):
         assert direction in LIST_CAMERA_DIRECTIONS, "Invalid Camera Direction"
 
-        sources = [direction + '_depth', direction + '_visual_in_depth_frame']
+        sources = [direction + '_depth', direction + '_depth_in_visual_frame']
 
         image_responses = self.capture_images(sources)
 
