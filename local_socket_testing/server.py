@@ -45,7 +45,6 @@ def read_bytes(sock, n):
 
 
 def read_from_client(client_socket, address, file_name_prefix):
-    i = 0
     while True:
         filename_length_bytes = client_socket.recv(4)
 
@@ -54,15 +53,19 @@ def read_from_client(client_socket, address, file_name_prefix):
             break
 
         filename_length = int_from_bytes(filename_length_bytes)
+        filename = read_bytes(filename_length)
+        file_content_length_bytes = client_socket.recv(4)
 
-        data = read_bytes(filename_length)
+        if not filename_length_bytes:
+            print("Connection closed by the client.")
+            break
 
-        # Write the data to a file
-        file_name = f"{file_name_prefix}_{address[0]}_{address[1]}_{i}.bin"
-        i += 1
-        with open(file_name, 'ab') as file:  # Append mode
-            file.write(data)
-            print(f"Data written to {file_name}")
+        file_content_length = int_from_bytes(file_content_length_bytes)
+        file_content = read_bytes(client_socket, file_content_length)
+        file_name = f"{file_name_prefix}_{filename}"
+
+        with open(file_name, 'wb') as file:
+            file.write(file_content)
 
 
 def handle_client_connection(client_socket: socket.socket, address, file_name_prefix):
