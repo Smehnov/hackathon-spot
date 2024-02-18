@@ -1,4 +1,4 @@
-name: Build image
+name: (ASR) Build image
 
 on:
   push:

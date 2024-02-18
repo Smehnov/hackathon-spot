@@ -1,6 +1,71 @@
 import socket
-import threading
+from threading import Thread, Lock
 import struct
+from enum import Enum
+
+
+ROTATION_ANGLE = {
+    'back_fisheye_image': 0,
+    'frontleft_fisheye_image': -78,
+    'frontright_fisheye_image': -102,
+    'left_fisheye_image': 0,
+    'right_fisheye_image': 180
+}
+
+
+class RobotStates(Enum):
+    WAITING_FOR_COMMAND = 1  # commands are of the form take me to something
+    TARGETING = 2  # back and forth between robot and server with yolo and images
+    WALKING = 3  # robot is facing towards the target and will start walking
+
+
+robot_state = RobotStates.WAITING_FOR_COMMAND
+robot_state_mutex = Lock()
+
+file_handler_threads = []
+
+
+def int_from_bytes(bt):
+    return struct.unpack('<I', bt)[0]
+
+
+def handle_new_file(file):
+    ext = file.split('.')[1]
+
+    with robot_state_mutex:
+        if ext == 'jpg':
+            if robot_state != RobotStates.TARGETING:
+                print("JPG files only relevant in targeting stage")
+                return
+
+            """
+            Call yolo on jpg and get bounding boxes and return response to spot
+            """
+
+        elif ext == 'wav':
+            if robot_state != RobotStates.WAITING_FOR_COMMAND:
+                print("WAV files only relevant when waiting for commands")
+                return
+
+            """
+            Send wav file to whisper api for transcription
+            """
+
+        else:
+            pass
+
+
+def read_bytes(sock, n):
+    data = b''
+
+    while len(data) < n:
+        chunk = sock.recv(n - len(data))
+        if not chunk:
+            print("Connection closed by the client during data reception.")
+            break
+        data += chunk
+
+    return data
 
 
 ROTATION_ANGLE = {
@@ -13,84 +78,69 @@ ROTATION_ANGLE = {
 
 
 def read_from_client(client_socket, address, file_name_prefix):
-    i = 0
-    try:
-        while True:  # Continually read messages
-            # Read the length of the incoming message (4 bytes, little endian)
-            length_bytes = client_socket.recv(4)
-            if not length_bytes:
-                print("Connection closed by the client.")
-                break  # Exit the loop if no data is received (connection closed)
+    while True:
+        filename_length_bytes = client_socket.recv(4)
 
-            # Unpack the length to an integer
-            length = struct.unpack('<I', length_bytes)[0]
-            print(f"Expecting {length} bytes of data.")
+        if not filename_length_bytes:
+            print("Connection closed by the client.")
+            break
 
-            # Initialize an empty byte array for the data
-            data = b''
+        filename_length = int_from_bytes(filename_length_bytes)
+        filename = read_bytes(client_socket, filename_length).decode('utf-8')
+        file_content_length_bytes = client_socket.recv(4)
 
-            # Read the specified amount of data
-            while len(data) < length:
-                chunk = client_socket.recv(length - len(data))
-                if not chunk:
-                    print("Connection closed by the client during data reception.")
-                    break  # Exit the loop if no data is received (connection closed)
-                data += chunk
+        if not filename_length_bytes:
+            print("Connection closed by the client.")
+            break
 
-            # Write the data to a file
-            file_name = f"{file_name_prefix}_{address[0]}_{address[1]}_{i}.bin"
-            i += 1
-            with open(file_name, 'ab') as file:  # Append mode
-                file.write(data)
-                print(f"Data written to {file_name}")
+        file_content_length = int_from_bytes(file_content_length_bytes)
+        file_content = read_bytes(client_socket, file_content_length)
+        file_name = f"{file_name_prefix}/{filename}"
 
-    except Exception as e:
-        print(f"Error reading from {address}: {e}")
+        with open(file_name, 'wb') as file:
+            file.write(file_content)
+
+        file_handler_threads.append(
+            Thread(target=handle_new_file, args=(file_name,)))
+        file_handler_threads[-1].start()
 
 
 def handle_client_connection(client_socket: socket.socket, address, file_name_prefix):
-    try:
-        with client_socket:
-            print(f"Connection from {address} has been established.")
+    with client_socket:
+        print(f"Connection from {address} has been established.")
 
-            # Create and start the reading thread
-            reading_thread = threading.Thread(
-                target=read_from_client,
-                args=(client_socket, address, file_name_prefix))
-            reading_thread.start()
+        # Create and start the reading thread
+        reading_thread = Thread(
+            target=read_from_client,
+            args=(client_socket, address, file_name_prefix))
+        reading_thread.start()
 
-            while True:
-                command = input("Enter command: ")
-                if command == "ligma":
-                    break
-                client_socket.sendall((command + '\n').encode('utf-8'))
+        while True:
+            command = input("Enter command: ")
+            if command == "ligma":
+                break
+            client_socket.sendall((command + '\n').encode('utf-8'))
 
-            # Wait for the reading thread to finish before closing the connection
-            reading_thread.join()
-    except Exception as e:
-        print(f"An error occurred with the client {address}: {e}")
+        reading_thread.join()
 
 
 def start_server(host, port, file_name_prefix):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_socket.bind((host, port))
         server_socket.listen()
 
         print(f"Server listening on {host}:{port}")
 
-        while True:
-            client_socket, address = server_socket.accept()
-            # For each connection, create a new thread to handle the client
-            client_thread = threading.Thread(target=handle_client_connection,
-                                             args=(client_socket, address, file_name_prefix))
-            client_thread.start()
+        # only accept one connection, end after one connection
+        client_socket, address = server_socket.accept()
+        handle_client_connection(client_socket, address, file_name_prefix)
 
 
-# Configuration
-HOST = '0.0.0.0'  # Listen on all network interfaces
-PORT = 8080  # Port number to listen on
-FILE_NAME_PREFIX = 'received_data'  # Prefix for the file names where data is stored
+HOST = '0.0.0.0'
+PORT = 8080
+FILE_NAME_PREFIX = 'files'
 
-# Start the server
+
 if __name__ == "__main__":
     start_server(HOST, PORT, FILE_NAME_PREFIX)
