@@ -193,6 +193,8 @@ class SpotController:
 
         image_responses = self.image_client.get_image_from_sources(cameras)
 
+        print(f"image_responses: {image_responses}")
+
         return image_responses
 
     def capture_depth_and_visual_image(self, direction):
@@ -208,5 +210,7 @@ class SpotController:
                                     image_responses[0].shot.image.cols)
 
         cv_visual = cv2.imdecode(np.frombuffer(image_responses[1].shot.image.data, dtype=np.uint8), -1)
+
+        print(cv_depth, cv_visual)
 
         return cv_depth, cv_visual

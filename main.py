@@ -90,6 +90,11 @@ def main():
 
                 if command == "take_image":
                     depth, visual = spot.capture_depth_and_visual_image('frontleft')
+
+                    if not depth or not visual:
+                        print(depth, visual)
+                        continue
+
                     depth_bytes = depth.tobytes()
                     visual_bytes = visual.tobytes()
                     s.sendall(len(depth_bytes).to_bytes(4, 'little'))
