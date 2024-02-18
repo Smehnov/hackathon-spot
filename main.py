@@ -36,8 +36,11 @@ def pixel_format_string_to_enum(enum_string):
 
 
 def take_image_handler(spot, sock, command=None):
-    sources = ['back_fisheye_image', 'frontleft_fisheye_image', 'frontright_fisheye_image', 'left_fisheye_image',
-               'right_fisheye_image']
+    # sources = ['back_fisheye_image', 'frontleft_fisheye_image', 'frontright_fisheye_image', 'left_fisheye_image',
+    #            'right_fisheye_image']
+
+    sources = ['frontleft_fisheye_image']
+
     pixel_format = pixel_format_string_to_enum('PIXEL_FORMAT_RGB_U8')
 
     image_request = [
