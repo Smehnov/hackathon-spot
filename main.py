@@ -71,7 +71,7 @@ def main():
         buffer = ''
 
         while True:
-            data = s.recv(2**12)
+            data = s.recv(4096)
 
             print(f"received: {data.decode('utf-8')}")
 
@@ -92,10 +92,10 @@ def main():
                     depth, visual = spot.capture_depth_and_visual_image('frontleft')
                     depth_bytes = depth.tobytes()
                     visual_bytes = visual.tobytes()
-                    s.send(len(depth_bytes).to_bytes(4, 'little'))
-                    s.send(depth_bytes)
-                    s.send(len(visual_bytes).to_bytes(4, 'little'))
-                    s.send(visual_bytes)
+                    s.sendall(len(depth_bytes).to_bytes(4, 'little'))
+                    s.sendall(depth_bytes)
+                    s.sendall(len(visual_bytes).to_bytes(4, 'little'))
+                    s.sendall(visual_bytes)
                 elif command == "":
                     pass
                 else:
