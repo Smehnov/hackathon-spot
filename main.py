@@ -73,14 +73,20 @@ def main():
         while True:
             data = s.recv(2**12)
 
+            print(f"received: {data.decode('utf-8')}")
+
             if not data:
                 print("Disconnected from the server.")
                 break
 
             buffer += data.decode('utf-8')
 
+            print(f"buffer: {buffer}")
+
             while '\n' in buffer:
                 command, buffer = buffer.split('\n', 1)
+
+                print(f"command: {command}")
 
                 if command == "take_image":
                     depth, visual = spot.capture_depth_and_visual_image('frontleft')
