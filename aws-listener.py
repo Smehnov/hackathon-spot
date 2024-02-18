@@ -28,19 +28,17 @@ def execute_command(command):
         return f"Error executing command: {e.output.decode('utf-8')}"
 
 def listen_and_execute():
-    # Initial wait time for polling
-    wait_time_seconds = 0
-    while wait_time_seconds <= 90:
-        # Receive messages from the queue
+    remaining_wait_time = 20
+    while remaining_wait_time > 0:
+        # Short polling, wait up to 5 seconds for a message
         response = sqs.receive_message(
             QueueUrl=queue_url,
             AttributeNames=['All'],
             MaxNumberOfMessages=1,
             VisibilityTimeout=0,
-            WaitTimeSeconds=min(90, 90 - wait_time_seconds)  # Adjusted wait time
+            WaitTimeSeconds=0
         )
 
-        # Check if there are any messages
         if 'Messages' in response:
             for message in response['Messages']:
                 # Extract command from the message
@@ -59,10 +57,14 @@ def listen_and_execute():
                 )
 
                 # Reset wait time if a message is received
-                wait_time_seconds = 0
-        else:
-            # Increment wait time if no messages received
-            wait_time_seconds += 20  # Long polling, waits up to 20 seconds for a message
+                remaining_wait_time = 20
+                break  # Exit inner loop after processing a message
+
+        # No message received, reduce remaining wait time
+        remaining_wait_time -= min(5, remaining_wait_time)
+
+    # No message received after 20 seconds, handle it (log, error, exit)
+    print("No message received after", 20, "seconds.")
 
 if __name__ == "__main__":
     listen_and_execute()
