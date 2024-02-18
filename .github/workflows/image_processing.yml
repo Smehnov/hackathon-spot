@@ -1,4 +1,4 @@
-name: Build image
+name: (Image Processing) Build image
 
 on:
   push:
