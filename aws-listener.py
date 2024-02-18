@@ -2,14 +2,18 @@ import boto3
 import subprocess
 
 # Read credentials from file
-def read_credentials():
-    with open('rootkey.csv', 'r') as file:
-        lines = file.readlines()
-        access_key = lines[1].split(',')[2].strip()
-        secret_key = lines[2].split(',')[2].strip()
-        return access_key, secret_key
+with open("ex.csv", "r") as file:
+    lines = file.readlines()  # Read all lines into a list
 
-access_key, secret_key = read_credentials()
+    # Skip the header row (assuming it exists)
+    header = lines[0]
+
+    # Access the second row (index 1) and split it into cells
+    row_data = lines[1].split(",")
+
+    # Extract cells A2 and B2
+    access_key = row_data[0]
+    secret_key = row_data[1]
 
 # Initialize SQS client
 sqs = boto3.client('sqs', region_name='us-east-2', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
