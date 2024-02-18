@@ -200,7 +200,7 @@ class SpotController:
     def capture_depth_and_visual_image(self, direction):
         assert direction in LIST_CAMERA_DIRECTIONS, "Invalid Camera Direction"
 
-        sources = [direction + '_depth', direction + '_depth_in_visual_frame']
+        sources = [direction + '_depth_in_visual_frame', direction + '_fisheye_image']
 
         image_responses = self.capture_images(sources)
 
@@ -217,7 +217,10 @@ class SpotController:
         cv_depth = cv_depth.reshape(image_responses[0].shot.image.rows,
                                     image_responses[0].shot.image.cols)
 
-        cv_visual = cv2.imdecode(np.frombuffer(image_responses[1].shot.image.data, dtype=np.uint8), -1)
+        cv_visual = cv2.imdecode(
+            np.frombuffer(
+                image_responses[1].shot.image.data, dtype=np.uint8),
+            -1)
 
         print(cv_depth is None)
         print(cv_visual is None)

@@ -91,7 +91,7 @@ def main():
                 if command == "take_image":
                     depth, visual = spot.capture_depth_and_visual_image('frontleft')
 
-                    if not depth or not visual:
+                    if depth is None or visual is None:
                         print(depth is None)
                         print(visual is None)
                         continue
