@@ -15,8 +15,9 @@ with open("rootkey.csv", "r") as file:
     secret_key = row_data[1]
 
 # Initialize SQS client
-sqs = boto3.client('sqs', region_name='us-east-2', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
 queue_url = 'https://sqs.us-east-2.amazonaws.com/905418297534/MyQueue.fifo'
+session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+sqs = session.client('sqs')
 
 def send_message(message):
     try:
