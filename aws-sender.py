@@ -11,12 +11,15 @@ with open("rootkey.csv", "r") as file:
     row_data = lines[1].split(",")
 
     # Extract cells A2 and B2
-    access_key = row_data[0]
-    secret_key = row_data[1]
+    access_key = row_data[0].strip()
+    secret_key = row_data[1].strip()
+
+print("Access Key: ", access_key)
+print("Secret Key: ", secret_key)
 
 # Initialize SQS client
 queue_url = 'https://sqs.us-east-2.amazonaws.com/905418297534/MyQueue.fifo'
-session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+session = boto3.Session(aws_access_key_id=access_key, aws_secret_access_key=secret_key, region_name="us-east-2")
 sqs = session.client('sqs')
 
 def send_message(message):
@@ -24,7 +27,8 @@ def send_message(message):
         # Send message to the queue
         response = sqs.send_message(
             QueueUrl=queue_url,
-            MessageBody=message
+            MessageBody=message,
+            MessageGroupId='messageGroup1'
         )
         print(f"Message sent: {response['MessageId']}")
     except Exception as e:
