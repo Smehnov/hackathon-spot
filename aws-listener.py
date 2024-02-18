@@ -60,12 +60,10 @@ def listen_and_execute():
                 except Exception as e:
                     pass
 
-                # Reset wait time if a message is received
-                remaining_wait_time = 20
                 break  # Exit inner loop after processing a message
 
         # No message received, reduce remaining wait time
-        remaining_wait_time -= min(5, remaining_wait_time)
+        remaining_wait_time -= 1
 
     # No message received after 20 seconds, handle it (log, error, exit)
     print("No message received after", 20, "seconds.")
