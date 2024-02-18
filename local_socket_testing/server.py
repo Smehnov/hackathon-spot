@@ -2,7 +2,8 @@ import socket
 from threading import Thread, Lock
 import struct
 from enum import Enum
-
+from ultralytics import YOLO
+import time
 
 ROTATION_ANGLE = {
     'back_fisheye_image': 0,
@@ -19,10 +20,16 @@ class RobotStates(Enum):
     WALKING = 3  # robot is facing towards the target and will start walking
 
 
-robot_state = RobotStates.WAITING_FOR_COMMAND
+robot_state = RobotStates.TARGETING
 robot_state_mutex = Lock()
 
 file_handler_threads = []
+
+model = YOLO("yolov8n.pt")
+
+translation = None
+most_recent_classes = None
+most_recent_boxes = None
 
 
 def int_from_bytes(bt):
@@ -37,6 +44,19 @@ def handle_new_file(file):
             if robot_state != RobotStates.TARGETING:
                 print("JPG files only relevant in targeting stage")
                 return
+
+            results = model("files/scenery.jpeg")[0]
+            boxes = results.boxes.xyxy.numpy()
+            class_names = results.names
+            pred = results.boxes.cls.numpy()
+
+            global translation, most_recent_boxes, most_recent_classes
+            if translation is None:
+                translation = class_names
+
+            most_recent_classes = pred
+            most_recent_boxes = boxes
+
 
             """
             Call yolo on jpg and get bounding boxes and return response to spot
@@ -66,15 +86,6 @@ def read_bytes(sock, n):
         data += chunk
 
     return data
-
-
-ROTATION_ANGLE = {
-    'back_fisheye_image': 0,
-    'frontleft_fisheye_image': -78,
-    'frontright_fisheye_image': -102,
-    'left_fisheye_image': 0,
-    'right_fisheye_image': 180
-}
 
 
 def read_from_client(client_socket, address, file_name_prefix):
@@ -116,10 +127,18 @@ def handle_client_connection(client_socket: socket.socket, address, file_name_pr
         reading_thread.start()
 
         while True:
-            command = input("Enter command: ")
+            command = input("Start process:")
             if command == "ligma":
                 break
-            client_socket.sendall((command + '\n').encode('utf-8'))
+
+            seq = ['take_image',
+                   'start_asr',
+                   'move_towards_point',
+                   'take_image',
+                   'move_towards_point']
+
+            for inst in seq:
+                client_socket.sendall((inst + '\n').encode('utf-8'))
 
         reading_thread.join()
 
