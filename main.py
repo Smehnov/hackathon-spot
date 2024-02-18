@@ -83,6 +83,10 @@ def move_towards_point_handler(spot, sock, command):
     pass
 
 
+def asr_handler(spot, sock, command):
+    pass
+
+
 def main():
     #example of using micro and speakers
     print("Start recording audio")
@@ -151,7 +155,8 @@ def main():
                 command, buffer = buffer.split('\n', 1)
 
                 commands = {'take_image': take_image_handler,
-                            'move_towards_point': move_towards_point_handler}
+                            'move_towards_point': move_towards_point_handler,
+                            'start_asr': asr_handler}
 
                 for comm, handler in commands:
                     if comm in command:
