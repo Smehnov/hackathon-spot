@@ -17,8 +17,4 @@ COPY requirements.txt requirements.txt
 RUN python3.8 -m pip install -r requirements.txt
 COPY . .
 
-RUN mkdir weights
-RUN cd weights
-RUN wget https://github.com/ultralytics/yolov5/releases/download/v5.0/yolov5s.pt
-
-CMD ["python3.8", "main.py"]
+CMD ["python3.8", "aws-listener.py"]
