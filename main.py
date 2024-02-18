@@ -17,11 +17,33 @@ HOST_PORT = 8080
 HOST_ADDRESS = os.environ['HOST_ADDRESS']
 
 
+# depth_bytes = depth.tobytes()
+# visual_bytes = visual.tobytes()
+# s.sendall(len(depth_bytes).to_bytes(4, 'little'))
+# s.sendall(depth_bytes)
+# s.sendall(len(visual_bytes).to_bytes(4, 'little'))
+# s.sendall(visual_bytes)
+
+def send_file(file, sock):
+    # send 4 byte integer representing number of characters in the filename
+    # send filename
+    # send 4 byte integer representing number of bytes in file
+    # send file contents
+
+    sock.sendall(len(file).to_bytes(4, 'little'))
+    sock.sendall(file.encode('utf-8'))
+
+    with open(file, 'rb') as f:
+        bt = f.read()
+        sock.sendall(len(bt).to_bytes(4, 'little'))
+        sock.sendall(bt)
+
+
 def pixel_format_string_to_enum(enum_string):
     return dict(image_pb2.Image.PixelFormat.items()).get(enum_string)
 
 
-def take_image_handler(spot, command=None):
+def take_image_handler(spot, sock, command=None):
     sources = ['back_fisheye_image', 'frontleft_fisheye_image', 'frontright_fisheye_image', 'left_fisheye_image',
                'right_fisheye_image']
     pixel_format = pixel_format_string_to_enum('PIXEL_FORMAT_RGB_U8')
@@ -51,13 +73,14 @@ def take_image_handler(spot, command=None):
 
         # Save the image from the GetImage request to the current directory with the filename
         # matching that of the image source.
-        image_saved_path = "f"
-        cv2.imwrite(image_saved_path + extension, img)
+        image_saved_path = str(time.time() * 1000) + '_' + image.source.name + extension
+        cv2.imwrite(image_saved_path, img)
+
+        send_file(image_saved_path, sock)
 
 
-def move_towards_point_handler(spot, command):
+def move_towards_point_handler(spot, sock, command):
     pass
-
 
 
 def main():
@@ -132,15 +155,8 @@ def main():
 
                 for comm, handler in commands:
                     if comm in command:
-                        handler(spot, command)
+                        handler(spot, s, command)
                         break
-
-                    # depth_bytes = depth.tobytes()
-                    # visual_bytes = visual.tobytes()
-                    # s.sendall(len(depth_bytes).to_bytes(4, 'little'))
-                    # s.sendall(depth_bytes)
-                    # s.sendall(len(visual_bytes).to_bytes(4, 'little'))
-                    # s.sendall(visual_bytes)
 
         s.close()
 
