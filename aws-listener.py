@@ -50,11 +50,15 @@ def listen_and_execute():
                 # Print the result
                 print(result)
 
-                # Delete the message from the queue
-                sqs.delete_message(
-                    QueueUrl=queue_url,
-                    ReceiptHandle=message['ReceiptHandle']
-                )
+                try:
+                    # Delete the message from the queue
+                    sqs.delete_message(
+                        QueueUrl=queue_url,
+                        ReceiptHandle=message['ReceiptHandle']
+                    )
+                    print(f"Message deleted: {message['MessageId']}")
+                except Exception as e:
+                    pass
 
                 # Reset wait time if a message is received
                 remaining_wait_time = 20
