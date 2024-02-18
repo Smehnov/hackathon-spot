@@ -1,8 +1,18 @@
 import boto3
 import subprocess
 
+# Read credentials from file
+def read_credentials():
+    with open('rootkey.csv', 'r') as file:
+        lines = file.readlines()
+        access_key = lines[1].split(',')[2].strip()
+        secret_key = lines[2].split(',')[2].strip()
+        return access_key, secret_key
+
+access_key, secret_key = read_credentials()
+
 # Initialize SQS client
-sqs = boto3.client('sqs', region_name='us-east-2')
+sqs = boto3.client('sqs', region_name='us-east-2', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
 
 # Replace 'your_queue_url' with your SQS queue URL
 queue_url = 'https://sqs.us-east-2.amazonaws.com/905418297534/MyQueue.fifo'
