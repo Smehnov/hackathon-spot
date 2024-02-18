@@ -23,38 +23,39 @@ robot_state = RobotStates.WAITING_FOR_COMMAND
 robot_state_mutex = Lock()
 
 
-def int_from_bytes(bytes,):
+def int_from_bytes(bytes):
     return struct.unpack('<I', bytes)[0]
-
 
 
 def handle_new_file(file):
     pass
 
 
+def read_bytes(sock, n):
+    data = b''
+
+    while len(data) < n:
+        chunk = sock.recv(n - len(data))
+        if not chunk:
+            print("Connection closed by the client during data reception.")
+            break
+        data += chunk
+
+    return data
+
+
 def read_from_client(client_socket, address, file_name_prefix):
     i = 0
-    while True:  # Continually read messages
-        # Read the length of the incoming message (4 bytes, little endian)
-        length_bytes = client_socket.recv(4)
-        if not length_bytes:
+    while True:
+        filename_length_bytes = client_socket.recv(4)
+
+        if not filename_length_bytes:
             print("Connection closed by the client.")
-            break  # Exit the loop if no data is received (connection closed)
+            break
 
-        # Unpack the length to an integer
-        length = struct.unpack('<I', length_bytes)[0]
-        print(f"Expecting {length} bytes of data.")
+        filename_length = int_from_bytes(filename_length_bytes)
 
-        # Initialize an empty byte array for the data
-        data = b''
-
-        # Read the specified amount of data
-        while len(data) < length:
-            chunk = client_socket.recv(length - len(data))
-            if not chunk:
-                print("Connection closed by the client during data reception.")
-                break  # Exit the loop if no data is received (connection closed)
-            data += chunk
+        data = read_bytes(filename_length)
 
         # Write the data to a file
         file_name = f"{file_name_prefix}_{address[0]}_{address[1]}_{i}.bin"
