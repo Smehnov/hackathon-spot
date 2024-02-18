@@ -8,27 +8,19 @@ import socket
 import numpy as np
 import cv2
 
-
-ROBOT_IP = "10.0.0.3"#os.environ['ROBOT_IP']
-SPOT_USERNAME = "admin"#os.environ['SPOT_USERNAME']
-SPOT_PASSWORD = "2zqa8dgw7lor"#os.environ['SPOT_PASSWORD']
+ROBOT_IP = "10.0.0.3"
+SPOT_USERNAME = "admin"
+SPOT_PASSWORD = "2zqa8dgw7lor"
 
 HOST_PORT = 8080
 HOST_ADDRESS = os.environ['HOST_ADDRESS']
 
 
-# depth_bytes = depth.tobytes()
-# visual_bytes = visual.tobytes()
-# s.sendall(len(depth_bytes).to_bytes(4, 'little'))
-# s.sendall(depth_bytes)
-# s.sendall(len(visual_bytes).to_bytes(4, 'little'))
-# s.sendall(visual_bytes)
-
 def send_file(file, sock):
-    # send 4 byte integer representing number of characters in the filename
-    # send filename
-    # send 4 byte integer representing number of bytes in file
-    # send file contents
+    # send 4 byte integer representing number of characters in the filename.
+    # send filename.
+    # send 4 byte integer representing number of bytes in file.
+    # send file contents.
 
     sock.sendall(len(file).to_bytes(4, 'little'))
     sock.sendall(file.encode('utf-8'))
@@ -63,16 +55,12 @@ def take_image_handler(spot, sock, command=None):
         img = np.frombuffer(image.shot.image.data, dtype=dtype)
         if image.shot.image.format == image_pb2.Image.FORMAT_RAW:
             try:
-                # Attempt to reshape array into an RGB rows X cols shape.
                 img = img.reshape((image.shot.image.rows, image.shot.image.cols, num_bytes))
             except ValueError:
-                # Unable to reshape the image data, trying a regular decode.
                 img = cv2.imdecode(img, -1)
         else:
             img = cv2.imdecode(img, -1)
 
-        # Save the image from the GetImage request to the current directory with the filename
-        # matching that of the image source.
         image_saved_path = str(time.time() * 1000) + '_' + image.source.name + extension
         cv2.imwrite(image_saved_path, img)
 
@@ -87,8 +75,12 @@ def asr_handler(spot, sock, command):
     pass
 
 
+COMMAND_HANDLERS = {'take_image': take_image_handler,
+                    'move_towards_point': move_towards_point_handler,
+                    'start_asr': asr_handler}
+
+
 def main():
-    #example of using micro and speakers
     print("Start recording audio")
     sample_name = "aaaa.wav"
     cmd = f'arecord -vv --format=cd --device={os.environ["AUDIO_INPUT_DEVICE"]} -r 48000 --duration=10 -c 1 {sample_name}'
@@ -97,17 +89,10 @@ def main():
     print("Playing sound")
     os.system(f"ffplay -nodisp -autoexit -loglevel quiet {sample_name}")
 
-    # Capture image
-    camera_capture = cv2.VideoCapture(0)
-    rv, image = camera_capture.read()
-    print(f"Image Dimensions: {image.shape}")
-    camera_capture.release()
-
     with SpotController(username=SPOT_USERNAME, password=SPOT_PASSWORD, robot_ip=ROBOT_IP) as spot:
 
         time.sleep(1)
 
-        # Move head to specified positions with intermediate time.sleep
         spot.move_head_in_points(yaws=[0.2, 0],
                                  pitches=[0.3, 0],
                                  rolls=[0.4, 0],
@@ -133,8 +118,6 @@ def main():
             s.connect((HOST_ADDRESS, HOST_PORT))
             print(f"Successfully connected to {HOST_ADDRESS}:{HOST_PORT}")
 
-            # You can send and receive data here using s.sendall() and s.recv()
-            # Example: s.sendall(b'Hello, server')
         except Exception as e:
             print(f"Failed to connect to {HOST_ADDRESS}:{HOST_PORT}")
             print(f"Error: {e}")
@@ -145,7 +128,6 @@ def main():
 
         while True:
             data = s.recv(4096)
-
             if not data:
                 print("Disconnected from the server.")
                 break
@@ -154,11 +136,7 @@ def main():
             while '\n' in buffer:
                 command, buffer = buffer.split('\n', 1)
 
-                commands = {'take_image': take_image_handler,
-                            'move_towards_point': move_towards_point_handler,
-                            'start_asr': asr_handler}
-
-                for comm, handler in commands:
+                for comm, handler in COMMAND_HANDLERS:
                     if comm in command:
                         handler(spot, s, command)
                         break

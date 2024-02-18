@@ -22,13 +22,37 @@ class RobotStates(enum):
 robot_state = RobotStates.WAITING_FOR_COMMAND
 robot_state_mutex = Lock()
 
+file_handler_threads = []
 
-def int_from_bytes(bytes):
-    return struct.unpack('<I', bytes)[0]
+
+def int_from_bytes(bt):
+    return struct.unpack('<I', bt)[0]
 
 
 def handle_new_file(file):
-    pass
+    ext = file.split('.')[1]
+
+    with robot_state_mutex:
+        if ext == 'jpg':
+            if robot_state != RobotStates.TARGETING:
+                print("JPG files only relevant in targeting stage")
+                return
+
+            """
+            Call yolo on jpg and get bounding boxes and return response to spot
+            """
+
+        elif ext == 'wav':
+            if robot_state != RobotStates.WAITING_FOR_COMMAND:
+                print("WAV files only relevant when waiting for commands")
+                return
+
+            """
+            Send wav file to whisper api for transcription
+            """
+
+        else:
+            pass
 
 
 def read_bytes(sock, n):
@@ -66,6 +90,10 @@ def read_from_client(client_socket, address, file_name_prefix):
 
         with open(file_name, 'wb') as file:
             file.write(file_content)
+
+        file_handler_threads.append(
+            Thread(target=handle_new_file, args=(filename,)))
+        file_handler_threads[-1].start()
 
 
 def handle_client_connection(client_socket: socket.socket, address, file_name_prefix):
