@@ -1,9 +1,13 @@
 import os
 import time
+
+from bosdyn.api import image_pb2
+from bosdyn.client.image import build_image_request
 from spot_controller import SpotController
 import socket
-import threading
 import numpy as np
+import cv2
+
 
 ROBOT_IP = "10.0.0.3"#os.environ['ROBOT_IP']
 SPOT_USERNAME = "admin"#os.environ['SPOT_USERNAME']
@@ -11,6 +15,49 @@ SPOT_PASSWORD = "2zqa8dgw7lor"#os.environ['SPOT_PASSWORD']
 
 HOST_PORT = 8080
 HOST_ADDRESS = os.environ['HOST_ADDRESS']
+
+
+def pixel_format_string_to_enum(enum_string):
+    return dict(image_pb2.Image.PixelFormat.items()).get(enum_string)
+
+
+def take_image_handler(spot, command=None):
+    sources = ['back_fisheye_image', 'frontleft_fisheye_image', 'frontright_fisheye_image', 'left_fisheye_image',
+               'right_fisheye_image']
+    pixel_format = pixel_format_string_to_enum('PIXEL_FORMAT_RGB_U8')
+
+    image_request = [
+        build_image_request(source, pixel_format=pixel_format)
+        for source in sources
+    ]
+
+    image_responses = spot.get_images(image_request)
+
+    for image in image_responses:
+        num_bytes = 3
+        dtype = np.uint8
+        extension = '.jpg'
+
+        img = np.frombuffer(image.shot.image.data, dtype=dtype)
+        if image.shot.image.format == image_pb2.Image.FORMAT_RAW:
+            try:
+                # Attempt to reshape array into an RGB rows X cols shape.
+                img = img.reshape((image.shot.image.rows, image.shot.image.cols, num_bytes))
+            except ValueError:
+                # Unable to reshape the image data, trying a regular decode.
+                img = cv2.imdecode(img, -1)
+        else:
+            img = cv2.imdecode(img, -1)
+
+        # Save the image from the GetImage request to the current directory with the filename
+        # matching that of the image source.
+        image_saved_path =
+        cv2.imwrite(image_saved_path + extension, img)
+
+
+def move_towards_point_handler(spot, command):
+    pass
+
 
 
 def main():
@@ -24,7 +71,6 @@ def main():
     os.system(f"ffplay -nodisp -autoexit -loglevel quiet {sample_name}")
 
     # Capture image
-    import cv2
     camera_capture = cv2.VideoCapture(0)
     rv, image = camera_capture.read()
     print(f"Image Dimensions: {image.shape}")
@@ -73,39 +119,28 @@ def main():
         while True:
             data = s.recv(4096)
 
-            print(f"received: {data.decode('utf-8')}")
-
             if not data:
                 print("Disconnected from the server.")
                 break
 
             buffer += data.decode('utf-8')
-
-            print(f"buffer: {buffer}")
-
             while '\n' in buffer:
                 command, buffer = buffer.split('\n', 1)
 
-                print(f"command: {command}")
+                commands = {'take_image': take_image_handler,
+                            'move_towards_point': move_towards_point_handler}
 
-                if command == "take_image":
-                    depth, visual = spot.capture_depth_and_visual_image('frontleft')
+                for comm, handler in commands:
+                    if comm in command:
+                        handler(spot, command)
+                        break
 
-                    if depth is None or visual is None:
-                        print(depth is None)
-                        print(visual is None)
-                        continue
-
-                    depth_bytes = depth.tobytes()
-                    visual_bytes = visual.tobytes()
-                    s.sendall(len(depth_bytes).to_bytes(4, 'little'))
-                    s.sendall(depth_bytes)
-                    s.sendall(len(visual_bytes).to_bytes(4, 'little'))
-                    s.sendall(visual_bytes)
-                elif command == "":
-                    pass
-                else:
-                    pass
+                    # depth_bytes = depth.tobytes()
+                    # visual_bytes = visual.tobytes()
+                    # s.sendall(len(depth_bytes).to_bytes(4, 'little'))
+                    # s.sendall(depth_bytes)
+                    # s.sendall(len(visual_bytes).to_bytes(4, 'little'))
+                    # s.sendall(visual_bytes)
 
         s.close()
 

@@ -226,3 +226,6 @@ class SpotController:
         print(cv_visual is None)
 
         return cv_depth, cv_visual
+
+    def get_images(self, requests):
+        return self.image_client.get_image(requests)

@@ -3,6 +3,15 @@ import threading
 import struct
 
 
+ROTATION_ANGLE = {
+    'back_fisheye_image': 0,
+    'frontleft_fisheye_image': -78,
+    'frontright_fisheye_image': -102,
+    'left_fisheye_image': 0,
+    'right_fisheye_image': 180
+}
+
+
 def read_from_client(client_socket, address, file_name_prefix):
     i = 0
     try:
