@@ -92,7 +92,8 @@ def main():
                     depth, visual = spot.capture_depth_and_visual_image('frontleft')
 
                     if not depth or not visual:
-                        print(depth, visual)
+                        print(depth is None)
+                        print(visual is None)
                         continue
 
                     depth_bytes = depth.tobytes()

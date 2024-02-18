@@ -193,7 +193,7 @@ class SpotController:
 
         image_responses = self.image_client.get_image_from_sources(cameras)
 
-        print(f"image_responses: {image_responses}")
+        print(f"length: {len(image_responses)}")
 
         return image_responses
 
@@ -204,6 +204,14 @@ class SpotController:
 
         image_responses = self.capture_images(sources)
 
+        print(len(image_responses))
+
+        print(image_responses[0] is None)
+        print(image_responses[1] is None)
+
+        print(len(image_responses[1].shot.image.data))
+        print(image_responses[1].shot.image.rows, image_responses[1].shot.image.cols)
+
         cv_depth = np.frombuffer(image_responses[0].shot.image.data, dtype=np.uint16)
 
         cv_depth = cv_depth.reshape(image_responses[0].shot.image.rows,
@@ -211,6 +219,7 @@ class SpotController:
 
         cv_visual = cv2.imdecode(np.frombuffer(image_responses[1].shot.image.data, dtype=np.uint8), -1)
 
-        print(cv_depth, cv_visual)
+        print(cv_depth is None)
+        print(cv_visual is None)
 
         return cv_depth, cv_visual
