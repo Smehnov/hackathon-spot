@@ -2,7 +2,7 @@ import boto3
 import subprocess
 
 # Read credentials from file
-with open("ex.csv", "r") as file:
+with open("rootkey.csv", "r") as file:
     lines = file.readlines()  # Read all lines into a list
 
     # Skip the header row (assuming it exists)
