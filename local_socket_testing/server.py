@@ -1,7 +1,7 @@
 import socket
 from threading import Thread, Lock
 import struct
-import enum
+from enum import Enum
 
 
 ROTATION_ANGLE = {
@@ -13,7 +13,7 @@ ROTATION_ANGLE = {
 }
 
 
-class RobotStates(enum):
+class RobotStates(Enum):
     WAITING_FOR_COMMAND = 1  # commands are of the form take me to something
     TARGETING = 2  # back and forth between robot and server with yolo and images
     WALKING = 3  # robot is facing towards the target and will start walking
@@ -77,7 +77,7 @@ def read_from_client(client_socket, address, file_name_prefix):
             break
 
         filename_length = int_from_bytes(filename_length_bytes)
-        filename = read_bytes(filename_length)
+        filename = read_bytes(client_socket, filename_length).decode('utf-8')
         file_content_length_bytes = client_socket.recv(4)
 
         if not filename_length_bytes:
@@ -86,13 +86,13 @@ def read_from_client(client_socket, address, file_name_prefix):
 
         file_content_length = int_from_bytes(file_content_length_bytes)
         file_content = read_bytes(client_socket, file_content_length)
-        file_name = f"{file_name_prefix}_{filename}"
+        file_name = f"{file_name_prefix}/{filename}"
 
         with open(file_name, 'wb') as file:
             file.write(file_content)
 
         file_handler_threads.append(
-            Thread(target=handle_new_file, args=(filename,)))
+            Thread(target=handle_new_file, args=(file_name,)))
         file_handler_threads[-1].start()
 
 
@@ -117,6 +117,7 @@ def handle_client_connection(client_socket: socket.socket, address, file_name_pr
 
 def start_server(host, port, file_name_prefix):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_socket.bind((host, port))
         server_socket.listen()
 
@@ -127,11 +128,10 @@ def start_server(host, port, file_name_prefix):
         handle_client_connection(client_socket, address, file_name_prefix)
 
 
-
 HOST = '0.0.0.0'
 PORT = 8080
-FILE_NAME_PREFIX = 'received_data'
+FILE_NAME_PREFIX = 'files'
 
-# Start the server
+
 if __name__ == "__main__":
     start_server(HOST, PORT, FILE_NAME_PREFIX)

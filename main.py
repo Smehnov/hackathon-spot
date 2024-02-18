@@ -61,7 +61,7 @@ def take_image_handler(spot, sock, command=None):
         else:
             img = cv2.imdecode(img, -1)
 
-        image_saved_path = str(time.time() * 1000) + '_' + image.source.name + extension
+        image_saved_path = str(int(time.time() * 1000)) + '_' + image.source.name + extension
         cv2.imwrite(image_saved_path, img)
 
         send_file(image_saved_path, sock)
@@ -81,13 +81,13 @@ COMMAND_HANDLERS = {'take_image': take_image_handler,
 
 
 def main():
-    print("Start recording audio")
-    sample_name = "aaaa.wav"
-    cmd = f'arecord -vv --format=cd --device={os.environ["AUDIO_INPUT_DEVICE"]} -r 48000 --duration=10 -c 1 {sample_name}'
-    print(cmd)
-    os.system(cmd)
-    print("Playing sound")
-    os.system(f"ffplay -nodisp -autoexit -loglevel quiet {sample_name}")
+    # print("Start recording audio")
+    # sample_name = "aaaa.wav"
+    # cmd = f'arecord -vv --format=cd --device={os.environ["AUDIO_INPUT_DEVICE"]} -r 48000 --duration=10 -c 1 {sample_name}'
+    # print(cmd)
+    # os.system(cmd)
+    # print("Playing sound")
+    # os.system(f"ffplay -nodisp -autoexit -loglevel quiet {sample_name}")
 
     with SpotController(username=SPOT_USERNAME, password=SPOT_PASSWORD, robot_ip=ROBOT_IP) as spot:
 
@@ -136,7 +136,7 @@ def main():
             while '\n' in buffer:
                 command, buffer = buffer.split('\n', 1)
 
-                for comm, handler in COMMAND_HANDLERS:
+                for comm, handler in COMMAND_HANDLERS.items():
                     if comm in command:
                         handler(spot, s, command)
                         break
