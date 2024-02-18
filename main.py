@@ -51,7 +51,7 @@ def take_image_handler(spot, command=None):
 
         # Save the image from the GetImage request to the current directory with the filename
         # matching that of the image source.
-        image_saved_path =
+        image_saved_path = "f"
         cv2.imwrite(image_saved_path + extension, img)
 
 
