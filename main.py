@@ -32,7 +32,7 @@ def main():
                                  pitches=[0, 0.5],
                                  rolls=[0, 0.7],
                                  sleep_after_point_reached=1)
-        capture_image()
+
 
         
 
