@@ -19,18 +19,10 @@ def capture_image():
 
 def main():
     with SpotController(username=SPOT_USERNAME, password=SPOT_PASSWORD, robot_ip=ROBOT_IP) as spot:
-        fetch()
         capture_image()
-        spot.move_head_in_points(yaws=[0.2, 0],
-                                 pitches=[0.3, 0],
-                                 rolls=[0.4, 0],
-                                 sleep_after_point_reached=1)
-        capture_image()
-        spot.move_head_in_points(yaws=[0, 0.4],
-                                 pitches=[0, 0.5],
-                                 rolls=[0, 0.7],
-                                 sleep_after_point_reached=1)
-        capture_image()
+        for i in range(2):
+            spot.move_by_velocity_control(0, 0, 0.1)
+            capture_image()
 
 
 if __name__ == '__main__':
