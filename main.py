@@ -2,6 +2,7 @@ import os
 import time
 from spot_controller import SpotController
 import cv2
+from req import fetch
 
 ROBOT_IP = "10.0.0.3"#os.environ['ROBOT_IP']
 SPOT_USERNAME = "admin"#os.environ['SPOT_USERNAME']
@@ -19,9 +20,7 @@ def capture_image():
 def main():
     with SpotController(username=SPOT_USERNAME, password=SPOT_PASSWORD, robot_ip=ROBOT_IP) as spot:
 
-        msg = input("Input: ")
-
-        print(msg)
+        fetch()
 
         capture_image()
 
