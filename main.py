@@ -17,10 +17,14 @@ def capture_image():
 
 
 def main():
-    msg = input("YO SAY SOMETHING")
-    print(msg)
     with SpotController(username=SPOT_USERNAME, password=SPOT_PASSWORD, robot_ip=ROBOT_IP) as spot:
+
+        msg = input("YO SAY SOMETHING")
+
+        print(msg)
+
         capture_image()
+
 
 if __name__ == '__main__':
     main()
