@@ -1,6 +1,9 @@
 import http.client
 
-def fetch(url='http://192.168.2.189:8000', method='GET'):
+def fetch(path = "/", method='GET'):
+    # Url
+    url='http://192.168.2.189:8000'
+    
     # Define the URL and headers
     headers = {}
 
@@ -8,7 +11,7 @@ def fetch(url='http://192.168.2.189:8000', method='GET'):
     conn = http.client.HTTPConnection(url.split("/")[2])
 
     # Send a GET request
-    conn.request("GET", "/", headers=headers)
+    conn.request("GET", path, headers=headers)
 
     # Get the response
     response = conn.getresponse()
