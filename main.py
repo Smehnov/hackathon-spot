@@ -45,7 +45,7 @@ def main():
         # Make Spot to move by goal_x meters forward and goal_y meters left
         spot.move_to_goal(goal_x=0.5, goal_y=0)
         time.sleep(3)
-        # capture_image()
+        capture_image()
 
         # Control Spot by velocity in m/s (or in rad/s for rotation)
         # spot.move_by_velocity_control(v_x=-0.3, v_y=0, v_rot=0, cmd_duration=2)
