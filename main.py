@@ -21,7 +21,7 @@ def main():
     with SpotController(username=SPOT_USERNAME, password=SPOT_PASSWORD, robot_ip=ROBOT_IP) as spot:
         capture_image()
         for i in range(2):
-            spot.move_by_velocity_control(1, 1, 10)
+            spot.move_by_velocity_control(1, 1, 10, 10)
             capture_image()
 
 
